@@ -126,6 +126,13 @@
     }
 
     async function handleMovieQuery(input) {
+      const match = input.toLowerCase().match(/(tamil|telugu|hindi|malayalam|english)?\s*(\w+)?\s*movies?/);
+      if (match && (match[1] || match[2])) {
+        const language = match[1];
+        const genre = match[2];
+        return await fetchLanguageGenreMovies(language, genre);
+      }
+
       const genre = detectGenre(input);
       if (genre) {
         return await fetchGenreMovies(genre);
@@ -208,6 +215,59 @@
             📝 ${data.Plot.substring(0, 100)}...<br>`;
         }
       }
+      return responseText;
+    }
+
+    async function fetchLanguageGenreMovies(language, genre) {
+      const movieSamples = {
+        tamil: {
+          action: ['Vikram', 'Kaithi', 'Thani Oruvan'],
+          comedy: ['Boss Engira Bhaskaran', 'OK OK', 'Soodhu Kavvum'],
+          drama: ['Pariyerum Perumal', 'Asuran', '96'],
+          romance: ['96', 'Vinnaithaandi Varuvaayaa', 'Autograph'],
+          thriller: ['Ratsasan', 'Pizza', 'Anniyan']
+        },
+        telugu: {
+          action: ['Baahubali', 'Pushpa', 'Ala Vaikunthapurramuloo'],
+          comedy: ['Bommarillu', 'F2', 'Evadi Gola Vaadidhi'],
+          drama: ['Mahanati', 'Arjun Reddy', 'Jersey'],
+          romance: ['Geetha Govindam', 'Ye Maaya Chesave', 'Tholi Prema'],
+          thriller: ['Evaru', 'Goodachari', '1: Nenokkadine']
+        },
+        hindi: {
+          action: ['War', 'Shershaah', 'Uri'],
+          comedy: ['3 Idiots', 'Hera Pheri', 'Chupke Chupke'],
+          drama: ['Taare Zameen Par', 'Swades', 'Lagaan'],
+          romance: ['Dilwale Dulhania Le Jayenge', 'Barfi!', 'Aashiqui 2'],
+          thriller: ['Kahaani', 'Andhadhun', 'Drishyam']
+        },
+        malayalam: {
+          action: ['Lucifer', 'Kuruthi', 'Kaduva'],
+          comedy: ['Kunjiramayanam', 'Njan Prakashan', 'Udayananu Tharam'],
+          drama: ['Kumbalangi Nights', 'Drishyam', 'Joji'],
+          romance: ['Premam', 'Ennu Ninte Moideen', 'Thattathin Marayathu'],
+          thriller: ['Anjaam Pathiraa', 'C U Soon', 'Forensic']
+        }
+      };
+
+      if (!movieSamples[language] || !movieSamples[language][genre]) {
+        return `Sorry, I couldn't find ${language} ${genre} movies.`;
+      }
+
+      const movieList = movieSamples[language][genre];
+      let responseText = `<strong>🎬 Top ${language} ${genre} movies:</strong><br>`;
+
+      for (let title of movieList) {
+        const response = await fetch(`https://www.omdbapi.com/?apikey=${OMDB_API_KEY}&t=${encodeURIComponent(title)}`);
+        const data = await response.json();
+        if (data.Response === "True") {
+          responseText += `<br><strong>${data.Title}</strong> (${data.Year})<br>
+            <img src="${data.Poster}" style="width:100%; max-width:160px; margin:5px 0;"><br>
+            <em>${data.Genre}</em><br>
+            📝 ${data.Plot.substring(0, 100)}...<br>`;
+        }
+      }
+
       return responseText;
     }
   </script>
